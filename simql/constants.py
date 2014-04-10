@@ -1,4 +1,4 @@
-frim simql.models import Directory
+from simql.models import Directory
 
 
 TABLES = {
@@ -7,4 +7,11 @@ TABLES = {
 
 ALLOWED_COLUMNS = {
     Directory: ['username', 'firstname', 'lastname', 'cellphone', 'email', 'phone', 'year', 'id', 'room']
+}
+
+
+OP_TO_COLUMN_SUFFIX = {
+    '=': '',
+    '>': '__gt',
+    '<': '__lt',
 }

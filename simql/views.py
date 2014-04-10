@@ -2,57 +2,23 @@ from django.shortcuts import render
 from django.http import HttpResponse
 from simql.models import Directory
 from simql_to_json_converter import simql_to_json
-
 import json
-
-
-def compile_columns(table, columns):
-    if columns == '*':
-        return ALLOWED_COLUMNS[table]
-
-    compiled_columns = []
-    for column in columns:
-        column = column.lower()
-        if column in ALLOWED_COLUMNS[table]:
-            compiled_columns.append(column)
-        else:
-            raise Exception('Invalid column ' + column)
-    return compiled_columns
-
-
-def execute_select(query):
-    if 'from' not in query:
-        raise Exception('from required')
-    if 'columns' not in query:
-        raise Exception('columns required')
-
-    if query['from'] not in TABLES:
-        raise Exception('Invalid table ' + query['from'])
-
-    response = None
-
-    table = TABLES[query['from'].lower()]
-    columns = compile_columns(table, query['columns'])
-
-    response = table.objects.all().values(*columns)
-
-    return {'data': [item for item in response]}
-
-
-def execute_query(query):
-
-    if query['command'] == 'SELECT':
-        return execute_select(query)
-    else:
-        raise Exception('Cannot understand query command')
+from query_handler import execute_query
+from auth.constants import PUBLIC_ACCESS_TOKEN
+from auth.access_token_processor import access_token_to_privileges
 
 
 def query(request):
     response = {}
 
-    try:
+    #try:
+    if True:
         if 'query' not in request.REQUEST:
             raise Exception('query required')
+
+        access_token = PUBLIC_ACCESS_TOKEN
+        if 'access_token' in request.REQUEST:
+            access_token = request.REQUEST['access_token']
 
         if 'type' in request.REQUEST and request.REQUEST['type'] not in ['simql', 'json']:
             raise Exception('type can only be simql or json')
@@ -60,12 +26,20 @@ def query(request):
         query = request.REQUEST['query']
 
         if 'type' in request.REQUEST and request.REQUEST['type'] == 'simql':  # This is a SimQL query
-            query = simql_to_json(query)
-        else:  # This is a JSON query
+            #query = simql_to_json(query)
             query = json.loads(query)
+        else:  # This is a JSON query
+            query = simql_to_json(query)
+            if query is None:
+                raise Exception('malformed SimQL query')
+            #query = json.loads(query)
+        #return HttpResponse(str(query))
 
-        response = execute_query(query)
-    except Exception as ex:
-        return {'error': str(ex)}
+        privileges = access_token_to_privileges(access_token)
+
+        response = execute_query(query, privileges)
+   # except Exception as ex:
+       # response = {'error': str(ex)}
+       # raise ex
 
     return HttpResponse(json.dumps(response), content_type='application/json')

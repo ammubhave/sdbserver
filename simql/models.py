@@ -10,3 +10,6 @@ class Directory(models.Model):
     year = models.IntegerField(blank=True)
     cellphone = models.TextField(blank=True)
     email = models.TextField()
+
+    def __unicode__(self):
+        return "{0} - {1} {2}".format(self.username, self.firstname, self.lastname)
