@@ -130,12 +130,12 @@ class SqlParser(object):
     def p_statement_list(self, p):
         """
         statement_list : statement
-                       | statement_list statement
+                       | statement_list SEMI statement
         """
         if len(p) == 2:
             p[0] = [p[1]]
         else:
-            p[0] = p[1] + [p[2]]
+            p[0] = p[1] + [p[3]]
 
     def p_statement(self, p):
         """

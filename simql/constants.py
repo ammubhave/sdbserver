@@ -13,5 +13,8 @@ ALLOWED_COLUMNS = {
 OP_TO_COLUMN_SUFFIX = {
     '=': '',
     '>': '__gt',
+    '>=': '__gte',
     '<': '__lt',
+    '<=': '__lte',
+    '!=': '~'
 }

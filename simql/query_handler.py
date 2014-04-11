@@ -11,14 +11,16 @@ def execute_query(queries, privileges):
     if type(queries) is not list:
         queries = [queries]
 
+    results = []
     for query in queries:
         if 'command' not in query:
             raise Exception('command required')
 
         if query['command'] == 'SELECT':
-            return execute_select(query, privileges)
+            results.append(execute_select(query, privileges))
         else:
             raise Exception('Cannot understand query command ' + query['command'])
+    return results
 
 
 def compile_columns(table, columns):
@@ -55,10 +57,12 @@ def compile_and_permit_filter_by(table, where, privileges):
     op = where[0].upper()
 
     if op in ['AND', 'OR']:
+    	(left, leftcol) = compile_and_permit_filter_by(table, where[1], privileges)
+    	(right, rightcol) = compile_and_permit_filter_by(table, where[2], privileges)
         if op == 'AND':
-            return compile_and_permit_filter_by(table, where[1], privileges) & compile_and_permit_filter_by(table, where[2], privileges)
+            return left & right, leftcol + rightcol
         elif op == 'OR':
-            return compile_and_permit_filter_by(table, where[1], privileges) | compile_and_permit_filter_by(table, where[2], privileges)
+            return left | right, leftcol + rightcol
     elif op in OP_TO_COLUMN_SUFFIX:
         column = where[1]
         value = where[2]
@@ -66,7 +70,10 @@ def compile_and_permit_filter_by(table, where, privileges):
         if column not in columns or not check_read_on_columns(table, [column], privileges):
             raise Exception('Column ' + column + ' is invalid.')
 
-        return Q(**{column+OP_TO_COLUMN_SUFFIX[op]: value})
+        if op == '!=':
+            return ~Q(**{column: value}), [column]
+        else:
+            return Q(**{column+OP_TO_COLUMN_SUFFIX[op]: value}), [column]
 
     else:
         raise Exception('Invalid op')
@@ -89,7 +96,10 @@ def compile_filter_by(table, where):
         if column not in columns:
             raise Exception('Column ' + column + ' is invalid.')
 
-        return Q(**{column+OP_TO_COLUMN_SUFFIX[op]: value})
+        if op == '!=':
+            return ~Q(**{column: value}), [column]
+        else:
+            return Q(**{column+OP_TO_COLUMN_SUFFIX[op]: value})
 
     else:
         raise Exception('Invalid op')
