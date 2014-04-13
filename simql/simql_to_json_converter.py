@@ -154,6 +154,8 @@ class SqlParser(object):
             p[0] = ('insert', p[3], p[5], p[9])
         else:
             p[0] = ('insert', p[2], p[4], p[8])
+            
+        p[0] = {'command': 'INSERT', 'into': p[0][1], 'columns': p[0][2], 'values': p[0][3]}
 
     def p_select_statement(self, p):
         """

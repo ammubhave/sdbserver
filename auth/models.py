@@ -9,6 +9,7 @@ class UserPrivilege(models.Model):
 
 class App(models.Model):
     owner = models.ForeignKey(Directory)
+    name = models.TextField()
     app_key = models.CharField(max_length=32)
     app_secret = models.CharField(max_length=32)
     default_privileges = models.TextField()

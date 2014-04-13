@@ -7,7 +7,7 @@ class Directory(models.Model):
     lastname = models.TextField()
     room = models.TextField(blank=True)
     phone = models.TextField(blank=True)
-    year = models.IntegerField(blank=True)
+    year = models.TextField(blank=True)
     cellphone = models.TextField(blank=True)
     homepage = models.TextField(blank=True)
     home_city = models.TextField(blank=True)

@@ -1,5 +1,6 @@
 from constants import ALLOWED_COLUMNS, TABLES, OP_TO_COLUMN_SUFFIX
 from select_query import execute_select
+from insert_query import execute_insert
 from django.db.models import Q
 from auth.privilege_validators import check_read_on_columns
 
@@ -18,6 +19,8 @@ def execute_query(queries, privileges):
 
         if query['command'] == 'SELECT':
             results.append(execute_select(query, privileges))
+        if query['command'] == 'INSERT':
+            results.append(execute_insert(query, privileges))
         else:
             raise Exception('Cannot understand query command ' + query['command'])
     return results
@@ -44,6 +47,7 @@ def compile_columns(table, columns):
     compiled_columns = []
     for column in columns:
         column = column.lower()
+        #raise Exception(str(column) + str(ALLOWED_COLUMNS))
         if column in ALLOWED_COLUMNS[table]:
             compiled_columns.append(column)
         else:

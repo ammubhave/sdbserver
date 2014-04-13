@@ -1,0 +1,100 @@
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <link rel="shortcut icon" href="../../assets/ico/favicon.ico">
+
+    <title>Sim DB App Center</title>
+    
+    
+   
+    <!-- Latest compiled and minified CSS -->
+    <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css">
+
+  <!-- Optional theme -->
+<link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap-theme.min.css">
+
+    <style>
+        body {
+            padding-top: 20px;
+            padding-bottom: 20px;
+        }
+        
+        .navbar {
+            margin-bottom: 20px;
+        }
+    </style>
+
+    <!-- Just for debugging purposes. Don't actually copy this line! -->
+    <!--[if lt IE 9]><script src="../../assets/js/ie8-responsive-file-warning.js"></script><![endif]-->
+
+    <!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+      <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+  </head>
+
+  <body>
+
+    <div class="container">
+
+      <!-- Static navbar -->
+      <div class="navbar navbar-default" role="navigation">
+        <div class="container-fluid">
+          <div class="navbar-header">
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+              <span class="sr-only">Toggle navigation</span>
+              <span class="icon-bar"></span>
+              <span class="icon-bar"></span>
+              <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="/">Sim DB App Center</a>
+          </div>
+          <div class="navbar-collapse collapse">
+            <ul class="nav navbar-nav navbar-right">
+              <li class="active"><a href="#">{{ user.username }}</a></li>
+            </ul>
+          </div><!--/.nav-collapse -->
+        </div><!--/.container-fluid -->
+      </div>
+
+      <div class="panel panel-default">
+        <div class="panel-heading">
+            <h3 class="panel-title">{{ app.name }}</h3>
+        </div>
+        <div class="panel-body">
+            <strong>App Key: </strong><span style="font-family: monospace">{{ app.app_key}}</span><br />
+            <strong>App Secret: </strong><span style="font-family: monospace">{{app.app_secret}}</span> &nbsp;&nbsp;<a href="edit_app?key={{app.app_key}}&action=refresh_secret" class="glyphicon glyphicon-refresh"></a>
+            <h4>Default Privileges</h4>
+            <table class="table table-bordered">
+                <tr><th>Table.Column</th><th>Privilege Type</th><th>Conditions</th></tr>
+                {% for privilege in default_privileges %}
+                    <tr><td><a href="#">{{ privilege.0 }}</a></td><td>{{ privilege.1 }}</td><td>{{ privilege.2 }}</td></tr>
+                {% endfor %}
+            </table>
+            <h4>Extended Privileges</h4>
+            <table class="table table-bordered">
+                <tr><th>Table.Column</th><th>Privilege Type</th></tr>
+                {% for privilege in extended_privileges %}
+                    <tr><td><a href="#">{{ privilege.0 }}</a></td><td>{{ privilege.1 }}</td></tr>
+                {% endfor %}
+            </table>
+        </div>
+      </div>
+
+    </div> <!-- /container -->
+
+
+    <!-- Bootstrap core JavaScript
+    ================================================== -->
+    <!-- Placed at the end of the document so the pages load faster -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
+    <script src="../../dist/js/bootstrap.min.js"></script>
+  </body>
+</html>

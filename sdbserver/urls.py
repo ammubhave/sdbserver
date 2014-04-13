@@ -11,6 +11,9 @@ urlpatterns = patterns('',
     # Auth access tokens
     url(r'^auth/', include('auth.urls')),
 
+    url(r'^$', 'auth.views.view_home'),
+    url(r'^edit_app', 'auth.views.view_edit_app'),
+
     # Admin Site urls
     url(r'^admin/', include(admin.site.urls)),
 )

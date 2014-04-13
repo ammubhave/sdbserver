@@ -1,6 +1,7 @@
 from auth.constants import PUBLIC_ACCESS_TOKEN
 from auth.models import AccessToken
 from django.shortcuts import get_object_or_404
+import json
 
 
 COMMON_PRIVILEGES = [('Directory.id', 'R', ('=', 'id', 1)),
@@ -11,7 +12,7 @@ COMMON_PRIVILEGES = [('Directory.id', 'R', ('=', 'id', 1)),
 
 def get_privileges_from_access_token(access_token):
     from datetime import datetime
-    return get_object_or_404(AccessToken, access_token=access_token, expires__gt=datetime.now()).privileges
+    return json.loads(get_object_or_404(AccessToken, access_token=access_token, expires__gt=datetime.now()).privileges)
 
 
 def access_token_to_privileges(access_token):
@@ -20,7 +21,7 @@ def access_token_to_privileges(access_token):
     return get_privileges_from_access_token(access_token)
 
 
-def access_token_generator():
+def access_token_generator(l=32):
     import string
     import random
-    return ''.join(random.choice(string.ascii_uppercase + string.digits + string.ascii_lowercase) for _ in range(32))
+    return ''.join(random.choice(string.ascii_uppercase + string.digits + string.ascii_lowercase) for _ in range(l))
