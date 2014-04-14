@@ -37,7 +37,6 @@ INSTALLED_APPS = (
     'django.contrib.staticfiles',
     'simql',
     'auth',
-    'directory',
 )
 
 MIDDLEWARE_CLASSES = (
@@ -62,15 +61,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
     },
-    'sdb': {
-        'ENGINE': 'simql_backend',
-        'URL': 'https://amolbhave.mit.edu/simql',
-        'APP_KEY': 'dnqFjz05F5sDQCd5vV8EbDXJtM73pCvD',
-        'APP_SECRET': 'VxgowwYZSvmWVYs5vIFlUUABGXXQZYJR',
-    }
 }
-
-DATABASE_ROUTERS = ['SDBRouter.SDBRouter']
 
 # Internationalization
 # https://docs.djangoproject.com/en/1.6/topics/i18n/
