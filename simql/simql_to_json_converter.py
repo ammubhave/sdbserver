@@ -29,6 +29,7 @@ class SqlLexer(object):
        'NOT'    : 'NOT',
        'ASC'    : 'ASC',
        'DESC'   : 'DESC',
+       'LIMIT'  : 'LIMIT',
     }
 
     tokens = ['NUMBER',
@@ -51,22 +52,28 @@ class SqlLexer(object):
         return t
 
     def t_ID(self, t):
-        r'[a-zA-Z_][a-zA-Z_0-9]*'
-        t.type = SqlLexer.reserved.get(t.value.upper(),'ID')    # Check for reserved words
+        r'(?:"[a-zA-Z_][a-zA-Z_0-9]*"(\.(("[a-zA-Z_][a-zA-Z_0-9]*")|([a-zA-Z_][a-zA-Z_0-9]*)))*)|(?:[a-zA-Z_][a-zA-Z_0-9]*)'
+        t.type = SqlLexer.reserved.get(t.value.upper(), 'ID')    # Check for reserved words
         # redis is case sensitive in hash keys but we want the sql to be case insensitive,
         # so we lowercase identifiers
 
         if t.type != 'ID':
             t.value = t.value.upper()
+
+        t.value = t.value.strip('"')
         return t
 
     def t_STRING(self, t):
         # TODO: unicode...
         # Note: this regex is from pyparsing, 
         # see http://stackoverflow.com/questions/2143235/how-to-write-a-regular-expression-to-match-a-string-literal-where-the-escape-is
-        # TODO: may be better to refer to http://docs.python.org/reference/lexical_analysis.html 
-        '(?:"(?:[^"\\n\\r\\\\]|(?:"")|(?:\\\\x[0-9a-fA-F]+)|(?:\\\\.))*")|(?:\'(?:[^\'\\n\\r\\\\]|(?:\'\')|(?:\\\\x[0-9a-fA-F]+)|(?:\\\\.))*\')'
-        t.value = eval(t.value) 
+        # TODO: may be better to refer to http://docs.python.org/reference/lexical_analysis.html
+        '(?:\'(?:[^\'\\n\\r\\\\]|(?:\'\')|(?:\\\\x[0-9a-fA-F]+)|(?:\\\\.))*\')'
+        #'(?:"(?:[^"\\n\\r\\\\]|(?:"")|(?:\\\\x[0-9a-fA-F]+)|(?:\\\\.))*")|(?:\'(?:[^\'\\n\\r\\\\]|(?:\'\')|(?:\\\\x[0-9a-fA-F]+)|(?:\\\\.))*\')'
+        import ast
+        t.value = t.value[1:-1].replace("''", "\\'")
+        t.value = ast.literal_eval("'" + t.value + "'")
+        #t.value = eval(t.value)
         #t.value[1:-1]
         return t
 
@@ -92,7 +99,7 @@ class SqlLexer(object):
     t_LT      = r'<'
     t_LE      = r'<='
     t_EQ      = r'='
-    t_NE      = r'!='
+    t_NE      = r'!=|<>'
     #t_NE      = r'<>'
 
     def t_error(self, t):
@@ -112,9 +119,8 @@ class SqlLexer(object):
 #        self.leaf = leaf
         
 class SqlParser(object):
-    
     tokens = SqlLexer.tokens
-    
+
     #def p_empty(self, p):
     #    'empty :'
     #    pass    
@@ -154,19 +160,18 @@ class SqlParser(object):
             p[0] = ('insert', p[3], p[5], p[9])
         else:
             p[0] = ('insert', p[2], p[4], p[8])
-            
+
         p[0] = {'command': 'INSERT', 'into': p[0][1], 'columns': p[0][2], 'values': p[0][3]}
 
     def p_select_statement(self, p):
         """
-        select_statement : SELECT select_columns FROM ID opt_where_clause opt_orderby_clause
+        select_statement : SELECT select_columns FROM ID opt_where_clause opt_orderby_clause opt_limit_clause
         """
         p[0] = {'command': 'SELECT', 'columns': p[2], 'from': p[4], 'where': p[5], 'order_by': p[6]}
 
     def p_select_columns(self, p):
         """
-        select_columns : TIMES
-                       | id_list
+        select_columns : id_list
         """
         p[0] = p[1]
 
@@ -220,9 +225,9 @@ class SqlParser(object):
     def p_atom(self, p):
         """
         atom : NUMBER
-             | ID
              | STRING
         """
+            # //| ID
         p[0] = p[1]
 
     def p_opt_orderby_clause(self, p):
@@ -231,7 +236,7 @@ class SqlParser(object):
                            |
         """
         if len(p) == 1:
-            p[0] = None
+            p[0] = []
         else:
             p[0] = p[3]
 
@@ -252,6 +257,19 @@ class SqlParser(object):
             p[0] = p[1] + [p[3]]
         elif len(p) == 5 and p[4] == 'DESC':
             p[0] = p[1] + ['-' + p[3]]
+
+    def p_opt_limit_clase(self, p):
+        """
+        opt_limit_clause : LIMIT NUMBER
+                         | LIMIT NUMBER COMMA NUMBER
+                         |
+        """
+        if len(p) == 3:
+            p[0] = {'start': 0, 'count': int(p[2])}
+        elif len(p) == 5:
+            p[0] = {'start': p[2], 'count': int(p[4])}
+        else:
+            p[0] = {'start': 0, 'count': -1}
 
     def p_id_list(self, p):
         """
@@ -308,10 +326,11 @@ class SqlParser(object):
             p[0] = p[2] 
 
     def p_error(self, p):
+        raise Exception('Syntax error in SimQL query at' + str(p.lineno))
         print "Syntax error in input" # TODO: at line %d, pos %d!" % (p.lineno)
 
     def build(self, **kwargs):
-        self.parser = yacc.yacc(module=self, debugfile='/tmp/parser.out',**kwargs)
+        self.parser = yacc.yacc(module=self, outputdir="/tmp", debugfile='/tmp/parser.out',**kwargs)
         return self.parser
 
 

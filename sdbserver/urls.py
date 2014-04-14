@@ -7,6 +7,8 @@ urlpatterns = patterns('',
 
     # SimQL
     url(r'^simql/', include('simql.urls')),
+    
+    url(r'^directory/', include('directory.urls')),
 
     # Auth access tokens
     url(r'^auth/', include('auth.urls')),

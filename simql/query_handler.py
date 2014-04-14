@@ -19,11 +19,20 @@ def execute_query(queries, privileges):
 
         if query['command'] == 'SELECT':
             results.append(execute_select(query, privileges))
-        if query['command'] == 'INSERT':
+        elif query['command'] == 'INSERT':
             results.append(execute_insert(query, privileges))
         else:
             raise Exception('Cannot understand query command ' + query['command'])
     return results
+
+
+def compile_column(table, column):
+    column = column.split(".")[-1].strip('"')
+
+    if column in ALLOWED_COLUMNS[table]:
+        return column
+    else:
+        raise Exception('Invalid column: ' + column)
 
 
 def compile_columns(table, columns):
@@ -40,52 +49,35 @@ def compile_columns(table, columns):
     @returns the compiled column list
     @throws Exception if any column in columns is not allowed
     """
-    if columns == '*':
-        raise Exception("* is not allowed")
-        #return ALLOWED_COLUMNS[table]
-
-    compiled_columns = []
-    for column in columns:
-        column = column.lower()
-        #raise Exception(str(column) + str(ALLOWED_COLUMNS))
-        if column in ALLOWED_COLUMNS[table]:
-            compiled_columns.append(column)
-        else:
-            raise Exception('Invalid column ' + column)
-    return compiled_columns
+    return [compile_column(table, column) for column in columns]
 
 
 def compile_and_permit_filter_by(table, where, privileges):
-    columns = ALLOWED_COLUMNS[table]
-
     op = where[0].upper()
 
     if op in ['AND', 'OR']:
-    	(left, leftcol) = compile_and_permit_filter_by(table, where[1], privileges)
-    	(right, rightcol) = compile_and_permit_filter_by(table, where[2], privileges)
+        (left, leftcol) = compile_and_permit_filter_by(table, where[1], privileges)
+        (right, rightcol) = compile_and_permit_filter_by(table, where[2], privileges)
         if op == 'AND':
             return left & right, leftcol + rightcol
         elif op == 'OR':
             return left | right, leftcol + rightcol
     elif op in OP_TO_COLUMN_SUFFIX:
-        column = where[1]
+        column = compile_column(table, where[1])
         value = where[2]
 
-        if column not in columns or not check_read_on_columns(table, [column], privileges):
+        if not check_read_on_columns(table, [column], privileges):
             raise Exception('Column ' + column + ' is invalid.')
 
-        if op == '!=':
+        if op in ('!=', '<>'):
             return ~Q(**{column: value}), [column]
         else:
             return Q(**{column+OP_TO_COLUMN_SUFFIX[op]: value}), [column]
-
     else:
         raise Exception('Invalid op')
 
 
 def compile_filter_by(table, where):
-    columns = ALLOWED_COLUMNS[table]
-
     op = where[0].upper()
 
     if op in ['AND', 'OR']:
@@ -94,29 +86,16 @@ def compile_filter_by(table, where):
         elif op == 'OR':
             return compile_filter_by(table, where[1]) | compile_filter_by(table, where[2])
     elif op in OP_TO_COLUMN_SUFFIX:
-        column = where[1]
+        column = compile_column(table, where[1])
         value = where[2]
 
-        if column not in columns:
-            raise Exception('Column ' + column + ' is invalid.')
-
-        if op == '!=':
+        if op not in ('!=', '<>'):
             return ~Q(**{column: value}), [column]
         else:
             return Q(**{column+OP_TO_COLUMN_SUFFIX[op]: value})
-
     else:
         raise Exception('Invalid op')
 
 
 def compile_order_by(table, order_by):
-    columns = ALLOWED_COLUMNS[table]
-
-    for column in order_by:
-        if column[0] == '-':
-            if column[1:] not in columns:
-                raise Exception('Invalid column ' + column[1:])
-        else:
-            if column not in columns:
-                raise Exception('Invalid column ' + column)
-    return order_by
+    return ['-' + compile_column(table, column[1:]) if column[0] == '-' else compile_column(table, column) for column in order_by]

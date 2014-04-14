@@ -11,18 +11,18 @@ def check_strong_read_on_columns(table, columns, privileges):
         priv_selects = priv[2]
         if priv_table == table.__name__ and priv_column in columns and priv_scope == 'R':
             if priv_column not in column_restrictions:
-                column_restrictions[priv_column] = []
+                column_restrictions[priv_column] = False
             if priv_selects != ():
-                column_restrictions[priv_column] = column_restrictions[priv_column].append(priv_selects)
+                column_restrictions[priv_column] = True
     for column in columns:
-        if column in column_restrictions and len(column_restrictions[column]) == 0:
-            columns.remove(column)
-    return len(columns) == 0
+        if column in column_restrictions and column_restrictions[column]:
+            return False
+    return True
 
 
 def check_read_on_columns(table, columns, privileges):
     columns = columns[:]
-    import sys
+    #import sys
     #print >>sys.stderr, columns
     for priv in privileges:
         priv_table = priv[0].split('.')[0]

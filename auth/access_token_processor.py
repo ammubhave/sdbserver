@@ -4,10 +4,15 @@ from django.shortcuts import get_object_or_404
 import json
 
 
-COMMON_PRIVILEGES = [('Directory.id', 'R', ('=', 'id', 1)),
+COMMON_PRIVILEGES = [('Directory.id', 'R', ()),
                      ('Directory.username', 'R', ()),
                      ('Directory.firstname', 'R', ()),
-                     ('Directory.lastname', 'R', ()), ]
+                     ('Directory.lastname', 'R', ()),
+                     ('Directory.room', 'R', ()),
+                     ('Directory.phone', 'R', ()),
+                     ('Directory.year', 'R', ()),
+                     ('Directory.cellphone', 'R', ()),
+                     ('Directory.email', 'R', ()), ]
 
 
 def get_privileges_from_access_token(access_token):
